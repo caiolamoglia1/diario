@@ -25,3 +25,5 @@ dist-ssr
 
 # vídeos de referência (não vão para o repo)
 *.mp4
+
+.vercel
