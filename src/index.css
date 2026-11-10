@@ -3989,3 +3989,397 @@ input::placeholder {
     animation: none;
   }
 }
+
+/* =========================================================
+   Moldes de capa
+   ========================================================= */
+.cover-art[class*='cs-'] {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.cs-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 7%;
+  z-index: 1;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.1) 60%, rgba(255, 255, 255, 0.08) 85%, rgba(0, 0, 0, 0.15));
+}
+
+.cs-spine.right {
+  left: auto;
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.cover-art[class*='cs-'] .cover-frame {
+  z-index: 2;
+}
+
+/* ---------- couro clássico (só para a miniatura; a capa real usa .face.cover) ---------- */
+.cs-classico {
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.14), transparent 45%),
+    linear-gradient(135deg, var(--leather), var(--leather-dark));
+}
+
+/* ---------- linho bordado ---------- */
+.cs-linho {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.2), transparent 50%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(50, 60, 40, 0.09) 0 1px, transparent 1px 3px),
+    linear-gradient(160deg, #bccaad, #97a985);
+  box-shadow: inset 0 0 30px rgba(50, 60, 40, 0.25);
+}
+
+.cs-wreath-wrap {
+  position: relative;
+  width: 86%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.cs-wreath {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cs-wreath-text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cs-linho .cover-title {
+  color: #5b3a4a;
+  font-size: calc(var(--page-w) * 0.088);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.cs-linho .cover-heart {
+  color: #c97f8e;
+  text-shadow: none;
+}
+
+.cs-linho .cover-names,
+.cs-linho .cover-hint {
+  color: #46553a;
+}
+
+.cs-linho .cover-names {
+  font-family: var(--font-script);
+  font-style: normal;
+  font-size: 1.5em;
+}
+
+.cs-bow {
+  position: absolute;
+  right: -3%;
+  top: 36%;
+  z-index: 3;
+  width: 22%;
+  filter: drop-shadow(-2px 4px 4px rgba(40, 30, 20, 0.35));
+}
+
+/* ---------- céu estrelado ---------- */
+.cs-estrelado {
+  background:
+    radial-gradient(ellipse at 72% 18%, rgba(120, 140, 230, 0.35), transparent 55%),
+    radial-gradient(ellipse at 18% 88%, rgba(170, 110, 210, 0.25), transparent 50%),
+    linear-gradient(170deg, #1d2a5c, #0e1536 70%, #0a0f26);
+}
+
+.cs-starfield {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cs-twinkle {
+  animation: twinkle-dot 3s ease-in-out infinite;
+}
+
+@keyframes twinkle-dot {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.cs-moon {
+  width: 22%;
+  margin-bottom: 0.2em;
+  filter: drop-shadow(0 0 12px rgba(255, 220, 140, 0.6));
+}
+
+.cs-estrelado .cover-title {
+  color: #f3d995;
+  text-shadow: 0 0 18px rgba(255, 220, 140, 0.45), 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.cs-estrelado .cover-heart {
+  color: #f3d995;
+}
+
+.cs-estrelado .cover-names,
+.cs-estrelado .cover-hint {
+  color: #e6dcc4;
+}
+
+.cs-elastic {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 9%;
+  z-index: 3;
+  width: 4.5%;
+  background: linear-gradient(90deg, #121212, #2c2c2e 40%, #0c0c0c);
+  box-shadow: -3px 0 5px rgba(0, 0, 0, 0.45), 2px 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- aquarela ---------- */
+.cs-aquarela {
+  background:
+    radial-gradient(rgba(150, 120, 90, 0.06) 1px, transparent 1.5px) 0 0 / 5px 5px,
+    linear-gradient(170deg, #fffaf2, #f6eee2);
+  box-shadow: inset 10px 0 12px -6px rgba(80, 50, 30, 0.2);
+}
+
+.cs-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(14px);
+  opacity: 0.8;
+}
+
+.cs-blob.b1 { width: 75%; height: 48%; left: -18%; top: -10%; background: radial-gradient(circle, #f6b3c3 30%, transparent 70%); }
+.cs-blob.b2 { width: 70%; height: 52%; right: -22%; top: 30%; background: radial-gradient(circle, #c8b6ef 30%, transparent 70%); }
+.cs-blob.b3 { width: 85%; height: 42%; left: 6%; bottom: -14%; background: radial-gradient(circle, #ffd0ae 30%, transparent 70%); }
+
+.cs-washi {
+  position: absolute;
+  top: 5%;
+  left: -5%;
+  z-index: 3;
+  width: 48%;
+  height: 5.5%;
+  transform: rotate(-12deg);
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.45) 0 6px, transparent 6px 12px),
+    #f2a9bb;
+  opacity: 0.88;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cs-pressed {
+  position: absolute;
+  z-index: 1;
+  filter: drop-shadow(1px 2px 2px rgba(80, 50, 30, 0.2));
+}
+
+.cs-pressed.pf-1 { bottom: 5%; left: 10%; width: 15%; transform: rotate(-16deg); }
+.cs-pressed.pf-2 { bottom: 7%; right: 12%; width: 12%; transform: rotate(20deg); }
+.cs-pressed.pf-3 { top: 12%; right: 10%; width: 12%; transform: rotate(165deg); }
+
+.cs-aquarela .cover-title {
+  font-family: var(--font-script);
+  font-style: normal;
+  font-weight: 700;
+  font-size: calc(var(--page-w) * 0.13);
+  color: #b0485f;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.cs-aquarela .cover-heart {
+  color: #d9809a;
+  text-shadow: none;
+}
+
+.cs-aquarela .cover-names,
+.cs-aquarela .cover-hint {
+  color: #7d6352;
+}
+
+/* ---------- carta vintage ---------- */
+.cs-vintage {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.16), transparent 50%),
+    radial-gradient(rgba(90, 60, 30, 0.14) 1px, transparent 1.5px) 0 0 / 6px 6px,
+    radial-gradient(rgba(255, 240, 210, 0.12) 1px, transparent 1.5px) 3px 2px / 9px 9px,
+    linear-gradient(160deg, #caa476, #a67c50);
+  box-shadow: inset 0 0 30px rgba(70, 40, 15, 0.3);
+}
+
+.cs-vintage .cs-spine {
+  background:
+    repeating-linear-gradient(180deg, transparent 0 10px, rgba(240, 225, 190, 0.5) 10px 16px) 70% 0 / 2px 100% no-repeat,
+    linear-gradient(90deg, #6e4a2b, #8a6038);
+  width: 8%;
+}
+
+.cs-stamps {
+  position: absolute;
+  top: 5%;
+  right: 6%;
+  z-index: 1;
+  width: 36%;
+  filter: drop-shadow(1px 2px 2px rgba(60, 30, 10, 0.3));
+}
+
+.cs-twine {
+  position: absolute;
+  z-index: 4;
+  background: repeating-linear-gradient(90deg, #ead9b4 0 4px, #c4ad83 4px 6px);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.cs-twine.h { left: 0; right: 0; top: 62%; height: 3px; }
+.cs-twine.v {
+  top: 0;
+  bottom: 0;
+  left: 84%;
+  width: 3px;
+  background: repeating-linear-gradient(180deg, #ead9b4 0 4px, #c4ad83 4px 6px);
+}
+
+.cs-twine-bow {
+  position: absolute;
+  z-index: 5;
+  left: calc(84% - 8.5%);
+  top: calc(62% - 5.5%);
+  width: 17%;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+}
+
+.cs-label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+  padding: 1.1em 1.4em;
+  border-radius: 3px;
+  background: linear-gradient(170deg, #f8f1e2, #ece0c6);
+  outline: 1px dashed rgba(120, 90, 60, 0.45);
+  outline-offset: -7px;
+  box-shadow: 0 4px 10px rgba(60, 30, 10, 0.35);
+  transform: rotate(-1.5deg);
+}
+
+.cs-vintage .cover-title {
+  color: #4a2f22;
+  font-size: calc(var(--page-w) * 0.09);
+  text-shadow: none;
+}
+
+.cs-vintage .cover-names,
+.cs-vintage .cover-hint {
+  color: #6b4a35;
+}
+
+.cs-wax {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  z-index: 5;
+  width: 15%;
+  aspect-ratio: 1;
+  margin-left: -7.5%;
+  border-radius: 46% 54% 50% 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 35% 30%, #c4405a, #7d1b30 70%);
+  color: #5a0f1f;
+  font-size: calc(var(--page-w) * 0.05);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.25), inset 0 -3px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- tema Morro: capas novas um pouco mais escuras e frias ---------- */
+[data-theme='moor'] .cover-art[class*='cs-'],
+[data-theme='moor'] .cover-mini:not(.cs-classico) {
+  filter: saturate(0.78) brightness(0.86) contrast(1.05);
+}
+
+/* ---------- seletor de capas (última página) ---------- */
+.cover-pick-title {
+  margin: 1em 0 0.4em;
+  font-family: var(--font-title);
+  font-style: italic;
+  font-size: 1.15em;
+  color: var(--title-ink, #5a2f3a);
+}
+
+.cover-picker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5em;
+}
+
+.cover-mini {
+  position: relative;
+  aspect-ratio: 0.7;
+  border: none;
+  border-radius: 3px 7px 7px 3px;
+  overflow: hidden;
+  padding: 0.3em;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: inset 4px 0 5px -3px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(60, 30, 10, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cover-mini:hover {
+  transform: translateY(-3px) rotate(-1.5deg);
+}
+
+.cover-mini.selected {
+  box-shadow: inset 4px 0 5px -3px rgba(0, 0, 0, 0.4), 0 0 0 3px var(--rose), 0 6px 12px rgba(60, 30, 10, 0.35);
+}
+
+.cover-mini-title {
+  margin-top: 30%;
+  font-family: var(--font-title);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 0.62em;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.cover-mini-name {
+  width: 100%;
+  padding: 0.15em 0.1em;
+  border-radius: 2px;
+  background: rgba(255, 252, 245, 0.88);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.56em;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.cover-mini.cs-classico .cover-mini-title { color: var(--gold); }
+.cover-mini.cs-linho .cover-mini-title { color: #5b3a4a; }
+.cover-mini.cs-estrelado .cover-mini-title { color: #f3d995; }
+.cover-mini.cs-aquarela .cover-mini-title { color: #b0485f; font-family: var(--font-script); font-style: normal; }
+.cover-mini.cs-vintage .cover-mini-title {
+  color: #4a2f22;
+  background: #f6efe0;
+  padding: 0.2em 0.3em;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-twinkle {
+    animation: none;
+  }
+}

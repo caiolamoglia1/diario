@@ -18,7 +18,7 @@ const EMPTY = {
   answeredBy: [],
   wishlist: [],
   countdowns: [],
-  settings: { together_since: null },
+  settings: { together_since: null, cover: null },
   missing: { notes: false, settings: false, cantinhos: false }
 };
 
@@ -55,7 +55,7 @@ export default function useDiaryData(me) {
       answeredBy: ab.data ?? [],
       wishlist: w.data ?? [],
       countdowns: c.data ?? [],
-      settings: { together_since: st.data?.together_since ?? null },
+      settings: { together_since: st.data?.together_since ?? null, cover: st.data?.cover ?? null },
       missing: {
         notes: isMissing(n.error),
         settings: Boolean(st.error),

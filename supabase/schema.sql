@@ -389,3 +389,6 @@ begin
     end if;
   end loop;
 end $$;
+
+-- Capa escolhida (também em 006_capa.sql)
+alter table public.diary_settings add column if not exists cover text;

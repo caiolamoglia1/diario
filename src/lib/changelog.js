@@ -1,6 +1,15 @@
 // Aba "atualizações": o que foi chegando no diário. A primeira é a mais nova.
 export const CHANGELOG = [
   {
+    version: '1.5',
+    date: '2026-11-10',
+    title: 'capas',
+    items: [
+      '📔 5 capas para escolher na última página: couro clássico, linho bordado, céu estrelado, aquarela e carta vintage',
+      '💞 a capa escolhida vale para os dois'
+    ]
+  },
+  {
     version: '1.4',
     date: '2026-11-10',
     title: 'cantinhos da mesa',

@@ -4,6 +4,7 @@ import Book from './Book';
 import { leavesToShow, maxLeaves, useSinglePage } from '../lib/book';
 import { BackCover, CoverArt, EndNote, EntryPage, InsideCover, ThemePage, WritePage } from './pages';
 import { setTheme, useTheme } from '../lib/theme';
+import { setCover } from '../lib/cover';
 import { specialDay, todayISO } from '../lib/constants';
 import { dismissToast, useToasts } from '../lib/notify';
 import useDiaryData from '../lib/useDiaryData';
@@ -38,6 +39,17 @@ export default function Diary({ me, onProfileChange }) {
   const questionPending = !missing.cantinhos && !data.answers.some(a => a.question_date === today && a.user_id === me.id);
   const byId = useMemo(() => Object.fromEntries(profiles.map(p => [p.id, p])), [profiles]);
   const writeIndex = 2 + entries.length;
+
+  // capa escolhida por um aparece para o outro também
+  useEffect(() => {
+    if (settings.cover) setCover(settings.cover);
+  }, [settings.cover]);
+
+  const pickCover = useCallback(async id => {
+    setCover(id);
+    // guarda para os dois (se o 006 ainda não foi rodado, fica só neste aparelho)
+    await supabase.from('diary_settings').upsert({ id: 1, cover: id, updated_at: new Date().toISOString() });
+  }, []);
 
   // atalho: "/" ou Ctrl+K abre a busca
   useEffect(() => {
@@ -117,14 +129,14 @@ export default function Diary({ me, onProfileChange }) {
           />
         )
       },
-      { key: 'clima', variant: 'paper', render: () => <ThemePage theme={theme} onChange={setTheme} /> }
+      { key: 'clima', variant: 'paper', render: () => <ThemePage theme={theme} onChange={setTheme} onPickCover={pickCover} /> }
     ];
     if (!single) {
       if (list.length % 2 === 0) list.push({ key: 'continua', variant: 'paper', render: () => <EndNote /> });
       list.push({ key: 'contracapa-final', variant: 'backcover', render: () => <BackCover /> });
     }
     return list;
-  }, [entries, profiles, byId, me, load, single, createEntry, theme, todayCount, settings, missing.settings, saveTogetherSince]);
+  }, [entries, profiles, byId, me, load, single, createEntry, theme, todayCount, settings, missing.settings, saveTogetherSince, pickCover]);
 
   // 1 página por folha no celular, 2 no computador
   const limit = maxLeaves(pages.length, single);

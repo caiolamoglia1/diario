@@ -6,6 +6,8 @@ import { notificationsSupported, toggleNotifications, useNotificationsEnabled } 
 import { Photo, PhotoPicker } from './Photo';
 import BlurText from './reactbits/BlurText/BlurText';
 import { CornerOrnament, Flourish, KeyCharm, Keyhole } from './DeskProps';
+import { FloralWreath, Moon, PostStamps, PressedFlower, RibbonBow, StarField, TwineBow } from './CoverStyles';
+import { COVERS, useCover } from '../lib/cover';
 
 /* ---------- capa ---------- */
 const COVER_STARS = [
@@ -35,22 +37,105 @@ function CoverDecor() {
   );
 }
 
-export function CoverArt({ members = [], children, animateTitle = true }) {
+export function CoverArt({ members = [], children, animateTitle = true, variant }) {
+  const chosen = useCover();
+  const cover = variant ?? chosen;
   const names = members.map(m => m.name).join(' & ');
+  const title = animateTitle ? (
+    <BlurText text="Nosso Diário" className="cover-title" delay={90} animateBy="letters" />
+  ) : (
+    <h1 className="cover-title">Nosso Diário</h1>
+  );
+  const bottom = (
+    <>
+      {children ?? (names && <p className="cover-names">{names}</p>)}
+      {!children && <p className="cover-hint">✦ toque para abrir ✦</p>}
+    </>
+  );
+
+  if (cover === 'linho') {
+    return (
+      <div className="cover-art cs-linho">
+        <div className="cs-spine" aria-hidden="true" />
+        <div className="cover-frame">
+          <div className="cs-wreath-wrap">
+            <FloralWreath />
+            <div className="cs-wreath-text">
+              {title}
+              <div className="cover-heart">❀</div>
+            </div>
+          </div>
+          {bottom}
+        </div>
+        <RibbonBow />
+      </div>
+    );
+  }
+
+  if (cover === 'estrelado') {
+    return (
+      <div className="cover-art cs-estrelado">
+        <StarField />
+        <div className="cs-spine" aria-hidden="true" />
+        <div className="cover-frame">
+          <Moon />
+          {title}
+          <div className="cover-heart">✦</div>
+          {bottom}
+        </div>
+        <div className="cs-elastic" aria-hidden="true" />
+      </div>
+    );
+  }
+
+  if (cover === 'aquarela') {
+    return (
+      <div className="cover-art cs-aquarela">
+        <span className="cs-blob b1" aria-hidden="true" />
+        <span className="cs-blob b2" aria-hidden="true" />
+        <span className="cs-blob b3" aria-hidden="true" />
+        <span className="cs-washi" aria-hidden="true" />
+        <PressedFlower className="pf-1" />
+        <PressedFlower className="pf-2" color="#b9a3e3" />
+        <PressedFlower className="pf-3" color="#f2a97e" />
+        <div className="cover-frame">
+          {title}
+          <div className="cover-heart">♡</div>
+          {bottom}
+        </div>
+      </div>
+    );
+  }
+
+  if (cover === 'vintage') {
+    return (
+      <div className="cover-art cs-vintage">
+        <div className="cs-spine" aria-hidden="true" />
+        <PostStamps />
+        <span className="cs-twine h" aria-hidden="true" />
+        <span className="cs-twine v" aria-hidden="true" />
+        <TwineBow />
+        <div className="cover-frame">
+          <div className="cs-label">
+            {title}
+            {bottom}
+          </div>
+        </div>
+        <span className="cs-wax" aria-hidden="true">♥</span>
+      </div>
+    );
+  }
+
+  // couro clássico
   return (
     <div className="cover-art">
       <CoverDecor />
       <div className="cover-frame">
         <Flourish />
         <span className="cover-ornament">✦</span>
-        {animateTitle ? (
-          <BlurText text="Nosso Diário" className="cover-title" delay={90} animateBy="letters" />
-        ) : (
-          <h1 className="cover-title">Nosso Diário</h1>
-        )}
+        {title}
         <div className="cover-heart">♥</div>
-        {children ?? (names && <p className="cover-names">{names}</p>)}
-        {!children && <p className="cover-hint">✦ toque para abrir ✦</p>}
+        {bottom}
         <Flourish />
       </div>
       <div className="cover-strap" aria-hidden="true">
@@ -65,6 +150,14 @@ export function CoverArt({ members = [], children, animateTitle = true }) {
 }
 
 export function BackCover() {
+  const cover = useCover();
+  if (cover !== 'classico') {
+    return (
+      <div className={`cover-art back-cover cs-${cover}`}>
+        {(cover === 'linho' || cover === 'vintage') && <div className="cs-spine right" aria-hidden="true" />}
+      </div>
+    );
+  }
   return (
     <div className="cover-art back-cover">
       <div className="cover-stitch" aria-hidden="true" />
@@ -484,8 +577,9 @@ const THEME_OPTIONS = [
   }
 ];
 
-export function ThemePage({ theme, onChange }) {
+export function ThemePage({ theme, onChange, onPickCover }) {
   const [quote, setQuote] = useState(0);
+  const cover = useCover();
   return (
     <div className="page-inner theme-page">
       <header className="page-head">
@@ -510,6 +604,21 @@ export function ThemePage({ theme, onChange }) {
               <small>{opt.desc}</small>
             </span>
             <span className="theme-check" aria-hidden="true">{theme === opt.id ? '✦' : ''}</span>
+          </button>
+        ))}
+      </div>
+      <h3 className="cover-pick-title">a capa do nosso diário</h3>
+      <div className="cover-picker" role="group" aria-label="capa do diário">
+        {COVERS.map(c => (
+          <button
+            key={c.id}
+            className={`cover-mini cs-${c.id}${cover === c.id ? ' selected' : ''}`}
+            onClick={() => onPickCover?.(c.id)}
+            aria-pressed={cover === c.id}
+            title={c.desc}
+          >
+            <span className="cover-mini-title">Nosso Diário</span>
+            <span className="cover-mini-name">{c.name}</span>
           </button>
         ))}
       </div>
