@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { MOODS, REACTIONS, formatDate, todayISO } from '../lib/constants';
+import { MOODS, QUOTES, REACTIONS, daysBetween, formatDate, todayISO } from '../lib/constants';
+import { removePhoto, uploadPhoto } from '../lib/photos';
+import { notificationsSupported, toggleNotifications, useNotificationsEnabled } from '../lib/notify';
+import { Photo, PhotoPicker } from './Photo';
 import BlurText from './reactbits/BlurText/BlurText';
 import { CornerOrnament, Flourish, KeyCharm, Keyhole } from './DeskProps';
 
@@ -73,7 +76,17 @@ export function BackCover() {
 }
 
 /* ---------- contracapa: ex libris ---------- */
-export function InsideCover({ members, entriesCount, firstDate, onEditProfile, onLogout }) {
+export function InsideCover({
+  members,
+  entriesCount,
+  firstDate,
+  onEditProfile,
+  onLogout,
+  notesToday,
+  onOpenNotes,
+  togetherSince,
+  onSetTogetherSince
+}) {
   const [a, b] = members;
   return (
     <div className="endpaper-inner">
@@ -97,10 +110,13 @@ export function InsideCover({ members, entriesCount, firstDate, onEditProfile, o
             </>
           )}
         </p>
+        <Together since={togetherSince} onSet={onSetTogetherSince} />
+        <NotesLine count={notesToday} onOpen={onOpenNotes} />
         <div className="plate-actions">
           <button className="link-btn" onClick={onEditProfile}>
             editar meu perfil
           </button>
+          <NotificationsToggle />
           <span>·</span>
           <button className="link-btn" onClick={onLogout}>
             sair
@@ -108,6 +124,58 @@ export function InsideCover({ members, entriesCount, firstDate, onEditProfile, o
         </div>
       </div>
     </div>
+  );
+}
+
+/** contador "juntos há X dias" + escolher a data */
+function Together({ since, onSet }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(since ?? '');
+  if (!onSet) return null; // tabela ainda não criada no Supabase
+  if (!since || editing) {
+    return (
+      <form
+        className="together-form"
+        onSubmit={e => {
+          e.preventDefault();
+          if (!value) return;
+          onSet(value);
+          setEditing(false);
+        }}
+      >
+        <span>quando começou a nossa história?</span>
+        <input type="date" className="date-input" value={value} max={todayISO()} onChange={e => setValue(e.target.value)} required />
+        <button className="link-btn">guardar</button>
+      </form>
+    );
+  }
+  const days = daysBetween(since, todayISO());
+  return (
+    <p className="together">
+      <span className="together-count">juntos há {days.toLocaleString('pt-BR')} {days === 1 ? 'dia' : 'dias'}</span> 💞
+      <button
+        className="link-btn tiny"
+        onClick={() => {
+          setValue(since);
+          setEditing(true);
+        }}
+      >
+        mudar data
+      </button>
+    </p>
+  );
+}
+
+function NotificationsToggle() {
+  const enabled = useNotificationsEnabled();
+  if (!notificationsSupported) return null;
+  return (
+    <>
+      <span>·</span>
+      <button className="link-btn" onClick={toggleNotifications}>
+        {enabled ? '🔔 avisos ligados' : '🔕 ativar avisos'}
+      </button>
+    </>
   );
 }
 
@@ -122,12 +190,26 @@ function Owner({ p }) {
   );
 }
 
+/* ---------- linha "bilhetinhos" dentro do livro ---------- */
+export function NotesLine({ count, onOpen }) {
+  if (!onOpen) return null;
+  return (
+    <button className="notes-line" onClick={onOpen}>
+      <span aria-hidden="true">💌</span>{' '}
+      {count > 0 ? `${count} ${count === 1 ? 'bilhetinho' : 'bilhetinhos'} hoje` : 'bilhetinhos do dia'}
+      <span className="notes-line-cta"> — ler ›</span>
+    </button>
+  );
+}
+
 /* ---------- formulário (página nova e edição) ---------- */
-export function EntryForm({ initial, onSubmit, onCancel, submitLabel = 'guardar no diário' }) {
+export function EntryForm({ initial, userId, onSubmit, onCancel, submitLabel = 'guardar no diário' }) {
   const [entryDate, setEntryDate] = useState(initial?.entry_date ?? todayISO());
   const [mood, setMood] = useState(initial?.mood ?? '');
   const [title, setTitle] = useState(initial?.title ?? '');
   const [content, setContent] = useState(initial?.content ?? '');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoRemoved, setPhotoRemoved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -136,15 +218,31 @@ export function EntryForm({ initial, onSubmit, onCancel, submitLabel = 'guardar 
     if (!content.trim()) return;
     setBusy(true);
     setError('');
-    const err = await onSubmit({
+    const values = {
       entry_date: entryDate,
       mood: mood || null,
       title: title.trim() || null,
       content: content.trim()
-    });
+    };
+    // só manda photo_path quando a foto mudou (assim funciona mesmo sem o 003 rodado)
+    try {
+      if (photoFile) values.photo_path = await uploadPhoto(photoFile, userId);
+      else if (photoRemoved) values.photo_path = null;
+    } catch (uploadError) {
+      setBusy(false);
+      setError(`não deu para enviar a foto: ${uploadError.message}`);
+      return;
+    }
+    const err = await onSubmit(values);
     setBusy(false);
-    if (err) setError(err);
-    else if (!initial) {
+    if (err) {
+      setError(err);
+      return;
+    }
+    if ((photoFile || photoRemoved) && initial?.photo_path) removePhoto(initial.photo_path);
+    setPhotoFile(null);
+    setPhotoRemoved(false);
+    if (!initial) {
       setTitle('');
       setContent('');
       setMood('');
@@ -193,6 +291,18 @@ export function EntryForm({ initial, onSubmit, onCancel, submitLabel = 'guardar 
         maxLength={20000}
         required
       />
+      <PhotoPicker
+        file={photoFile}
+        existingPath={photoRemoved ? null : initial?.photo_path}
+        onPick={f => {
+          setPhotoFile(f);
+          setPhotoRemoved(false);
+        }}
+        onClear={() => {
+          setPhotoFile(null);
+          setPhotoRemoved(true);
+        }}
+      />
       {error && <p className="error">{error}</p>}
       <div className="form-actions">
         {onCancel && (
@@ -208,7 +318,7 @@ export function EntryForm({ initial, onSubmit, onCancel, submitLabel = 'guardar 
   );
 }
 
-export function WritePage({ me, onCreate, pageNumber }) {
+export function WritePage({ me, onCreate, pageNumber, notesToday, onOpenNotes }) {
   return (
     <div className="page-inner">
       <header className="page-head">
@@ -220,7 +330,8 @@ export function WritePage({ me, onCreate, pageNumber }) {
           {me.name}
         </h2>
       </header>
-      <EntryForm onSubmit={onCreate} />
+      <NotesLine count={notesToday} onOpen={onOpenNotes} />
+      <EntryForm onSubmit={onCreate} userId={me.id} />
       <PageNumber n={pageNumber} />
     </div>
   );
@@ -247,7 +358,10 @@ export function EntryPage({ entry, author, me, onChanged, pageNumber }) {
     if (!window.confirm('Arrancar esta página do diário? Não dá para desfazer 🥺')) return;
     const { error } = await supabase.from('entries').delete().eq('id', entry.id);
     if (error) window.alert(error.message);
-    else onChanged();
+    else {
+      removePhoto(entry.photo_path);
+      onChanged();
+    }
   }
 
   async function toggleReaction(emoji) {
@@ -265,7 +379,7 @@ export function EntryPage({ entry, author, me, onChanged, pageNumber }) {
         <header className="page-head">
           <p className="eyebrow">editando</p>
         </header>
-        <EntryForm initial={entry} onSubmit={save} onCancel={() => setEditing(false)} submitLabel="salvar" />
+        <EntryForm initial={entry} userId={me.id} onSubmit={save} onCancel={() => setEditing(false)} submitLabel="salvar" />
         <PageNumber n={pageNumber} />
       </div>
     );
@@ -293,6 +407,7 @@ export function EntryPage({ entry, author, me, onChanged, pageNumber }) {
         {entry.title && <h2 className="page-title">{entry.title}</h2>}
       </header>
 
+      <Photo path={entry.photo_path} className="entry-photo" />
       <div className="entry-body lined-bg">{entry.content}</div>
 
       <footer className="entry-foot">
@@ -370,6 +485,7 @@ const THEME_OPTIONS = [
 ];
 
 export function ThemePage({ theme, onChange }) {
+  const [quote, setQuote] = useState(0);
   return (
     <div className="page-inner theme-page">
       <header className="page-head">
@@ -398,8 +514,11 @@ export function ThemePage({ theme, onChange }) {
         ))}
       </div>
       <blockquote className="theme-quote">
-        “Do que quer que sejam feitas nossas almas, a sua e a minha são iguais.”
+        <span key={quote} className="quote-fade">“{QUOTES[quote]}”</span>
         <cite>— Emily Brontë, O Morro dos Ventos Uivantes</cite>
+        <button className="link-btn" onClick={() => setQuote(q => (q + 1) % QUOTES.length)}>
+          outra citação ✦
+        </button>
       </blockquote>
     </div>
   );

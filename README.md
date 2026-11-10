@@ -36,6 +36,28 @@ com o `.env.local` preenchido o app passa a usar o banco automaticamente.
 > A chave anon/publishable pode ficar no front: quem protege os dados são as regras de RLS do `schema.sql`.
 > Só quem tem perfil no diário (no máximo 2 pessoas) consegue ler; cada um só edita ou apaga as próprias páginas.
 
+### Atualizações do banco (rode em ordem, uma vez cada)
+
+Cada arquivo pode ser rodado de novo sem problema. No SQL Editor, cole e clique em **Run**:
+
+1. `supabase/schema.sql` — base (perfis, páginas, reações)
+2. `supabase/002_bilhetes.sql` — bilhetinhos
+3. `supabase/003_fotos_e_datas.sql` — fotos (pasta privada `fotos`) e "juntos há X dias"
+4. `supabase/004_cantinhos.sql` — lacre seguro, cartas "abra quando", pergunta do dia, nossa lista, contagens, áudio
+
+### Avisos com o app fechado (push) — opcional
+
+As chaves já foram geradas em `supabase/push-segredos.local.txt` (fora do git; não compartilhe).
+
+1. **Edge Functions → Deploy a new function → Via Editor**, nome `push`. Cole o conteúdo de
+   `supabase/functions/push/index.ts` e, nas configurações da função, **desligue "Verify JWT"**.
+   (Ou pela linha de comando: `npx supabase functions deploy push --project-ref wwaozoyvpsqbdpcrfwpk --no-verify-jwt`.)
+2. **Edge Functions → Secrets**: cadastre `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `WEBHOOK_SECRET` com os valores do arquivo.
+3. **SQL Editor**: rode `supabase/005_push_avisos.local.sql` (cópia já preenchida com o seu segredo).
+4. **Vercel**: cadastre também `VITE_VAPID_PUBLIC_KEY` (o mesmo `VAPID_PUBLIC_KEY`) e faça redeploy.
+5. No celular, instale o app, abra o verso da capa e toque em **🔕 ativar avisos**.
+   No iPhone o push só funciona com o app instalado na tela de início (iOS 16.4+).
+
 ## Publicar (para os dois acessarem de qualquer lugar)
 
 Na **Vercel** ou **Netlify**: importe o repositório, use o comando de build `npm run build` e a pasta `dist`, e cadastre
@@ -48,7 +70,10 @@ as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` nas configurações
 - A última página é sempre uma **página em branco** para escrever (data, humor, título e texto).
 - Nas páginas do outro dá para deixar reações 💗 🥹 😂 🫂. As suas páginas podem ser editadas ou "arrancadas".
 - O que um escreve aparece na hora para o outro.
-- No verso da capa (ex libris) fica o botão de editar perfil e sair.
+- No verso da capa (ex libris) ficam: editar perfil, ativar avisos, "juntos há X dias" e sair.
+- **🗝️ gaveta** (nas fitinhas): bilhetinhos, cartas "abra quando…", pergunta do dia, nossa lista e contagens,
+  retrospectiva, busca, calendário e **atualizações** (o que há de novo no diário).
+- **🔍** ou a tecla **/** abre a busca.
 
 ## Estrutura
 

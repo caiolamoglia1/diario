@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react';
+import { QUOTES } from '../lib/constants';
+
 // Ilustrações em SVG dos objetos da mesa.
 // Gradientes compartilhados ficam em <SvgDefs/> (renderizado uma vez na mesa).
 
@@ -321,7 +324,7 @@ export function Stamp() {
   );
 }
 
-export function Polaroid() {
+export function Polaroid({ photo }) {
   return (
     <svg viewBox="0 0 190 220" className="svg-prop">
       <defs>
@@ -331,12 +334,18 @@ export function Polaroid() {
         </linearGradient>
       </defs>
       <rect x="8" y="10" width="172" height="200" rx="4" fill="url(#g-paper)" />
-      <rect x="22" y="24" width="144" height="134" fill="url(#sky)" />
-      <circle cx="140" cy="54" r="14" fill="#fff4d2" opacity="0.9" />
-      <path d="M22 140 C 60 122 110 128 166 136 L 166 158 L 22 158 Z" fill="#b9d6a5" />
-      <text x="64" y="128" fontSize="44" textAnchor="middle">🐻</text>
-      <text x="124" y="128" fontSize="44" textAnchor="middle">🐰</text>
-      <path d="M94 84 c-9 -6 -11 -12 -7 -16 c3 -3 6 -1 7 1 c1 -2 4 -4 7 -1 c4 4 2 10 -7 16z" fill="#e05f7e" />
+      {photo ? (
+        <image href={photo} x="22" y="24" width="144" height="134" preserveAspectRatio="xMidYMid slice" />
+      ) : (
+        <>
+          <rect x="22" y="24" width="144" height="134" fill="url(#sky)" />
+          <circle cx="140" cy="54" r="14" fill="#fff4d2" opacity="0.9" />
+          <path d="M22 140 C 60 122 110 128 166 136 L 166 158 L 22 158 Z" fill="#b9d6a5" />
+          <text x="64" y="128" fontSize="44" textAnchor="middle">🐻</text>
+          <text x="124" y="128" fontSize="44" textAnchor="middle">🐰</text>
+          <path d="M94 84 c-9 -6 -11 -12 -7 -16 c3 -3 6 -1 7 1 c1 -2 4 -4 7 -1 c4 4 2 10 -7 16z" fill="#e05f7e" />
+        </>
+      )}
       <rect x="22" y="24" width="144" height="134" fill="none" stroke="#000" strokeOpacity="0.12" strokeWidth="3" />
       <text x="94" y="194" fontSize="22" textAnchor="middle" fill="#7d6352" fontFamily="Dancing Script, cursive">nós</text>
       <g transform="rotate(-8 100 10)">
@@ -553,11 +562,18 @@ export function VintageKey() {
   );
 }
 
-export function FadedPolaroid() {
+export function FadedPolaroid({ photo }) {
   return (
     <svg viewBox="0 0 190 220" className="svg-prop">
       <rect x="8" y="10" width="172" height="200" rx="3" fill="#e4ded2" />
       <rect x="8" y="10" width="172" height="200" rx="3" fill="url(#g-old-paper)" opacity="0.35" />
+      {photo ? (
+        <>
+          <image href={photo} x="22" y="24" width="144" height="134" preserveAspectRatio="xMidYMid slice" style={{ filter: 'sepia(0.35) saturate(0.7) contrast(0.95)' }} />
+          <rect x="22" y="24" width="144" height="134" fill="#c8b48a" opacity="0.18" />
+        </>
+      ) : (
+        <>
       <rect x="22" y="24" width="144" height="134" fill="url(#g-moor-sky)" />
       {/* charneca e casa no morro */}
       <path d="M22 118 C 52 96 84 92 118 104 C 140 112 152 104 166 98 L166 158 L22 158 Z" fill="#6c7568" />
@@ -570,6 +586,8 @@ export function FadedPolaroid() {
       <path d="M134 84 C 140 70 160 68 166 76 C 168 82 158 88 146 88 C 140 88 134 88 134 84 Z" fill="#363733" />
       <path d="M146 80 C 154 76 162 76 166 76" stroke="#4a4c46" strokeWidth="1.5" fill="none" />
       <rect x="22" y="24" width="144" height="134" fill="#d8c8a8" opacity="0.25" />
+        </>
+      )}
       <rect x="22" y="24" width="144" height="134" fill="none" stroke="#000" strokeOpacity="0.15" strokeWidth="3" />
       <text x="94" y="194" fontSize="20" textAnchor="middle" fill="#5a4a40" fontFamily="Dancing Script, cursive">Haworth</text>
       <rect x="62" y="0" width="66" height="20" fill="#9a9a96" opacity="0.6" transform="rotate(6 95 10)" />
@@ -577,22 +595,19 @@ export function FadedPolaroid() {
   );
 }
 
-export function CalligraphyNote() {
+/** bilhete em papel envelhecido com citações que trocam sozinhas */
+export function QuoteNote() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setI(n => (n + 1) % QUOTES.length), 14000);
+    return () => clearInterval(t);
+  }, []);
   return (
-    <svg viewBox="0 0 220 180" className="svg-prop">
-      <path d="M10 14 L206 8 L212 166 L14 172 Z" fill="url(#g-old-paper)" />
-      <path d="M10 14 L206 8 L212 166 L14 172 Z" fill="none" stroke="#8a6a3e" strokeOpacity="0.45" strokeWidth="6" />
-      <g fontFamily="Dancing Script, cursive" fill="#2a1d1a" textAnchor="middle" fontSize="17">
-        <text x="110" y="52">Do que quer que sejam</text>
-        <text x="110" y="78">feitas nossas almas,</text>
-        <text x="110" y="104">a sua e a minha</text>
-        <text x="110" y="130">são iguais.</text>
-      </g>
-      <text x="176" y="156" fontFamily="Dancing Script, cursive" fill="#6b1c2e" fontSize="15" textAnchor="middle">— E. Brontë</text>
-      <circle cx="40" cy="150" r="13" fill="#6b1c2e" />
-      <circle cx="40" cy="150" r="9" fill="none" stroke="#3d0d18" strokeWidth="1.5" />
-      <path d="M40 154 c-4 -3 -5 -5 -3 -7 c1 -1 2 0 3 1 c1 -1 2 -2 3 -1 c2 2 1 4 -3 7z" fill="#3d0d18" />
-    </svg>
+    <div className="quote-note">
+      <p key={i} className="quote-fade">“{QUOTES[i]}”</p>
+      <span className="quote-sign">— E. Brontë</span>
+      <span className="quote-seal" aria-hidden="true">♥</span>
+    </div>
   );
 }
 

@@ -2,9 +2,9 @@ import { memo } from 'react';
 import Particles from './reactbits/Particles/Particles';
 import AnimatedContent from './reactbits/AnimatedContent/AnimatedContent';
 import { useTheme } from '../lib/theme';
+import { usePolaroidPhoto } from '../lib/photos';
 import {
   BlackCandle,
-  CalligraphyNote,
   Candle,
   DarkTeacup,
   DriedLeaf,
@@ -16,6 +16,7 @@ import {
   Pen,
   Petal,
   Polaroid,
+  QuoteNote,
   Sprig,
   Stamp,
   Star,
@@ -47,19 +48,19 @@ const COZY = [
   ['p-sprig', <Sprig key="sprig" />, 0.5],
   ['p-star-2', <Star key="s2" color="#f6d97e" />, 0.7],
   ['p-star-3', <Star key="s3" color="#b9c8f0" />, 0.75],
-  ['p-polaroid', <Polaroid key="polaroid" />, 0.35]
+  ['p-polaroid', null, 0.35]
 ];
 
 const MOOR = [
   ['m-teacup', <DarkTeacup key="cup" />, 0.2],
   ['m-thorns', <ThornBranch key="thorn" />, 0.3],
   ['m-roses', <DriedRoses key="roses" />, 0.35],
-  ['m-note', <CalligraphyNote key="note" />, 0.45],
+  ['m-note', <QuoteNote key="note" />, 0.45],
   ['m-candle', <BlackCandle key="candle" />, 0.25],
   ['m-petal-1', <Petal key="pt1" dark />, 0.5],
   ['m-petal-2', <Petal key="pt2" dark />, 0.55],
   ['m-key', <VintageKey key="key" />, 0.4],
-  ['m-polaroid', <FadedPolaroid key="pol" />, 0.35]
+  ['m-polaroid', null, 0.35]
 ];
 
 const MOTES = {
@@ -67,8 +68,10 @@ const MOTES = {
   moor: ['#e8d6a6', '#bcd0ea', '#9fb6d6']
 };
 
-function DeskDecor({ theme }) {
+function DeskDecor({ theme, photo }) {
   const props = theme === 'moor' ? MOOR : COZY;
+  // a polaroid mostra a foto mais recente de vocês (ou o desenho, se ainda não tiver foto)
+  const polaroid = theme === 'moor' ? <FadedPolaroid photo={photo} /> : <Polaroid photo={photo} />;
   return (
     <>
       <SvgDefs />
@@ -77,7 +80,7 @@ function DeskDecor({ theme }) {
         {props.map(([cls, node, delay]) => (
           <div key={cls} className={`prop ${cls}`}>
             <AnimatedContent trigger="mount" distance={30} direction="vertical" duration={1} delay={delay} scale={0.92}>
-              {node}
+              {node ?? polaroid}
             </AnimatedContent>
           </div>
         ))}
@@ -120,9 +123,10 @@ const Decor = memo(DeskDecor);
 
 export default function Desk({ children }) {
   const theme = useTheme();
+  const photo = usePolaroidPhoto();
   return (
     <div className="desk">
-      <Decor theme={theme} />
+      <Decor theme={theme} photo={photo} />
       <div className="desk-content">{children}</div>
     </div>
   );

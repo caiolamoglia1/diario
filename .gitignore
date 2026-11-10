@@ -27,3 +27,6 @@ dist-ssr
 *.mp4
 
 .vercel
+
+# segredos do push (gerados localmente, nunca vão para o git)
+supabase/*.local.*
