@@ -30,3 +30,4 @@ dist-ssr
 
 # segredos do push (gerados localmente, nunca vão para o git)
 supabase/*.local.*
+supabase/.temp
