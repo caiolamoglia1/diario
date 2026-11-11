@@ -438,10 +438,98 @@ export function WritePage({ me, onCreate, pageNumber, notesToday, onOpenNotes })
 }
 
 /* ---------- página escrita ---------- */
-export function EntryPage({ entry, author, me, onChanged, pageNumber }) {
-  const [editing, setEditing] = useState(false);
-  const mine = entry.author_id === me.id;
+
+/**
+ * Desenho de uma página escrita. Texto longo vira várias páginas:
+ * `part` é qual pedaço (0 = o começo, com cabeçalho e foto) e `last` diz se é o último
+ * (só ele leva reações e assinatura). Usado pela página de verdade e pelo medidor.
+ */
+export function EntryLayout({ entry, author, part = 0, last = true, text, photo, foot, pageNumber }) {
   const mood = MOODS.find(m => m.emoji === entry.mood);
+  return (
+    <div className="page-inner">
+      {part === 0 ? (
+        <header className="page-head">
+          <p className="entry-date">{formatDate(entry.entry_date)}</p>
+          <div className="entry-meta">
+            {author && (
+              <span className="author" style={{ '--c': author.color }}>
+                <span className="avatar sm" style={{ '--c': author.color }}>
+                  {author.emoji}
+                </span>
+                {author.name}
+              </span>
+            )}
+            {mood && (
+              <span className="mood-tag" title={mood.label}>
+                {mood.emoji} {mood.label}
+              </span>
+            )}
+          </div>
+          {entry.title && <h2 className="page-title">{entry.title}</h2>}
+        </header>
+      ) : (
+        <header className="page-head cont-head">
+          <p className="entry-date">
+            {formatDate(entry.entry_date)} <span className="cont-tag">· continuação</span>
+          </p>
+        </header>
+      )}
+
+      {part === 0 && photo}
+      <div className="entry-body lined-bg">{text ?? entry.content}</div>
+
+      {last ? (
+        <>
+          {foot}
+          {author && <p className="signature script">com carinho, {author.name}</p>}
+        </>
+      ) : (
+        <p className="page-continues">continua na próxima página →</p>
+      )}
+      <PageNumber n={pageNumber} />
+    </div>
+  );
+}
+
+/** reações + editar/arrancar, no pé da última parte da página */
+export function EntryFoot({ entry, meId, onReact, onEdit, onRemove }) {
+  const mine = entry.author_id === meId;
+  return (
+    <footer className="entry-foot">
+      <div className="reactions">
+        {REACTIONS.map(emoji => {
+          const who = (entry.reactions ?? []).filter(r => r.emoji === emoji);
+          const minePressed = who.some(r => r.user_id === meId);
+          return (
+            <button
+              key={emoji}
+              className={`reaction${minePressed ? ' on' : ''}${who.length ? ' has' : ''}`}
+              onClick={() => onReact?.(emoji)}
+              aria-pressed={minePressed}
+            >
+              {emoji}
+              {who.length > 0 && <small>{who.length}</small>}
+            </button>
+          );
+        })}
+      </div>
+      {mine && (
+        <div className="entry-actions">
+          <button className="link-btn" onClick={onEdit}>
+            editar
+          </button>
+          <button className="link-btn danger" onClick={onRemove}>
+            arrancar
+          </button>
+        </div>
+      )}
+    </footer>
+  );
+}
+
+export function EntryPage({ entry, author, me, onChanged, pageNumber, part = 0, parts = 1, text }) {
+  const [editing, setEditing] = useState(false);
 
   async function save(values) {
     const { error } = await supabase
@@ -487,62 +575,16 @@ export function EntryPage({ entry, author, me, onChanged, pageNumber }) {
   }
 
   return (
-    <div className="page-inner">
-      <header className="page-head">
-        <p className="entry-date">{formatDate(entry.entry_date)}</p>
-        <div className="entry-meta">
-          {author && (
-            <span className="author" style={{ '--c': author.color }}>
-              <span className="avatar sm" style={{ '--c': author.color }}>
-                {author.emoji}
-              </span>
-              {author.name}
-            </span>
-          )}
-          {mood && (
-            <span className="mood-tag" title={mood.label}>
-              {mood.emoji} {mood.label}
-            </span>
-          )}
-        </div>
-        {entry.title && <h2 className="page-title">{entry.title}</h2>}
-      </header>
-
-      <Photo path={entry.photo_path} className="entry-photo" />
-      <div className="entry-body lined-bg">{entry.content}</div>
-
-      <footer className="entry-foot">
-        <div className="reactions">
-          {REACTIONS.map(emoji => {
-            const who = entry.reactions.filter(r => r.emoji === emoji);
-            const minePressed = who.some(r => r.user_id === me.id);
-            return (
-              <button
-                key={emoji}
-                className={`reaction${minePressed ? ' on' : ''}${who.length ? ' has' : ''}`}
-                onClick={() => toggleReaction(emoji)}
-                aria-pressed={minePressed}
-              >
-                {emoji}
-                {who.length > 0 && <small>{who.length}</small>}
-              </button>
-            );
-          })}
-        </div>
-        {mine && (
-          <div className="entry-actions">
-            <button className="link-btn" onClick={() => setEditing(true)}>
-              editar
-            </button>
-            <button className="link-btn danger" onClick={remove}>
-              arrancar
-            </button>
-          </div>
-        )}
-      </footer>
-      {author && <p className="signature script">com carinho, {author.name}</p>}
-      <PageNumber n={pageNumber} />
-    </div>
+    <EntryLayout
+      entry={entry}
+      author={author}
+      part={part}
+      last={part === parts - 1}
+      text={text}
+      pageNumber={pageNumber}
+      photo={<Photo path={entry.photo_path} className="entry-photo" />}
+      foot={<EntryFoot entry={entry} meId={me.id} onReact={toggleReaction} onEdit={() => setEditing(true)} onRemove={remove} />}
+    />
   );
 }
 

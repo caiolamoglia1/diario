@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Book from './Book';
+import { useEntryPages } from './EntryPager';
 import { leavesToShow, maxLeaves, useSinglePage } from '../lib/book';
 import { BackCover, CoverArt, EndNote, EntryPage, InsideCover, ThemePage, WritePage } from './pages';
 import { setTheme, useTheme } from '../lib/theme';
@@ -35,12 +36,26 @@ export default function Diary({ me, onProfileChange }) {
   const [notesDate, setNotesDate] = useState(todayISO);
   const [bannerClosed, setBannerClosed] = useState(false);
   const [unseenUpdates, setUnseenUpdates] = useState(hasUnseenUpdates);
+  const [opening, setOpening] = useState(null); // id da página a abrir
 
   const today = todayISO();
   const todayCount = notes.filter(n => n.note_date === today).length;
   const questionPending = !missing.cantinhos && !data.answers.some(a => a.question_date === today && a.user_id === me.id);
   const byId = useMemo(() => Object.fromEntries(profiles.map(p => [p.id, p])), [profiles]);
-  const writeIndex = 2 + entries.length;
+
+  // texto longo continua nas páginas seguintes
+  const [entryChunks, pageMeasurer] = useEntryPages(entries, byId, me.id, single, theme);
+  const entryPages = useMemo(() => {
+    const list = [];
+    const start = {};
+    entries.forEach(entry => {
+      const parts = entryChunks[entry.id] ?? [entry.content];
+      start[entry.id] = 2 + list.length;
+      parts.forEach((text, part) => list.push({ entry, part, parts: parts.length, text, number: list.length + 1 }));
+    });
+    return { list, start };
+  }, [entries, entryChunks]);
+  const writeIndex = 2 + entryPages.list.length;
 
   // capa escolhida por um aparece para o outro também
   useEffect(() => {
@@ -86,21 +101,27 @@ export default function Diary({ me, onProfileChange }) {
     async values => {
       const { data: created, error } = await supabase.from('entries').insert(values).select('id').single();
       if (error) return error.message;
-      const list = await load();
-      const index = list.findIndex(e => e.id === created.id);
-      if (index >= 0) setFlipped(leavesToShow(2 + index, single));
+      await load();
+      setOpening(created.id);
       return null;
     },
-    [load, single]
+    [load]
   );
+
+  // abre a página de uma entrada (quando ela já estiver no livro)
+  useEffect(() => {
+    if (!opening || entryPages.start[opening] === undefined) return;
+    setFlipped(leavesToShow(entryPages.start[opening], single));
+    setOpening(null);
+  }, [opening, entryPages, single]);
 
   const openEntry = useCallback(
     index => {
       setModal(null);
       setView('diario');
-      setFlipped(leavesToShow(2 + index, single));
+      if (entries[index]) setOpening(entries[index].id);
     },
-    [single]
+    [entries]
   );
 
   const openNotes = useCallback(date => {
@@ -129,10 +150,22 @@ export default function Diary({ me, onProfileChange }) {
           />
         )
       },
-      ...entries.map((entry, i) => ({
-        key: entry.id,
+      ...entryPages.list.map(({ entry, part, parts, text, number }) => ({
+        key: part === 0 ? entry.id : `${entry.id}#${part}`,
         variant: 'paper',
-        render: () => <EntryPage entry={entry} author={byId[entry.author_id]} me={me} onChanged={load} pageNumber={i + 1} />
+        render: () => (
+          <EntryPage
+            key={entry.id}
+            entry={entry}
+            part={part}
+            parts={parts}
+            text={text}
+            author={byId[entry.author_id]}
+            me={me}
+            onChanged={load}
+            pageNumber={number}
+          />
+        )
       })),
       {
         key: 'escrever',
@@ -140,7 +173,7 @@ export default function Diary({ me, onProfileChange }) {
         render: () => (
           <WritePage
             me={me}
-            pageNumber={entries.length + 1}
+            pageNumber={entryPages.list.length + 1}
             onCreate={createEntry}
             notesToday={todayCount}
             onOpenNotes={() => setView('bilhetes')}
@@ -154,7 +187,7 @@ export default function Diary({ me, onProfileChange }) {
       list.push({ key: 'contracapa-final', variant: 'backcover', render: () => <BackCover /> });
     }
     return list;
-  }, [entries, profiles, byId, me, load, single, createEntry, theme, todayCount, settings, missing.settings, saveTogetherSince, pickCover]);
+  }, [entries, entryPages, profiles, byId, me, load, single, createEntry, theme, todayCount, settings, missing.settings, saveTogetherSince, pickCover]);
 
   // 1 página por folha no celular, 2 no computador
   const limit = maxLeaves(pages.length, single);
@@ -261,6 +294,7 @@ export default function Diary({ me, onProfileChange }) {
           <div className="book-stage">
             <Book pages={pages} flipped={current} onFlip={flipTo} onOpen={() => flipTo(latest)} single={single} />
           </div>
+          {pageMeasurer}
 
           <nav className="ribbon-nav" aria-label="navegação do diário">
             <button className="ribbon" onClick={() => flipTo(0)} disabled={isClosed}>

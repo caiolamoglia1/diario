@@ -1,6 +1,15 @@
 // Aba "atualizações": o que foi chegando no diário. A primeira é a mais nova.
 export const CHANGELOG = [
   {
+    version: '1.7',
+    date: '2026-11-10',
+    title: 'páginas longas',
+    items: [
+      '📖 escreveu muito? a página continua na próxima, como num livro de verdade — nada fica escondido lá embaixo',
+      '❤️ as reações e a assinatura ficam no fim do texto, na última parte'
+    ]
+  },
+  {
     version: '1.6',
     date: '2026-11-10',
     title: 'nada se perde',
