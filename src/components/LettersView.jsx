@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { LETTER_PROMPTS, formatDate, promptEmoji } from '../lib/constants';
 import { SectionStrip } from './Gaveta';
+import { friendlyError, useDraft } from '../lib/drafts';
+import { notifyError } from '../lib/notify';
 
 const dateOf = iso => formatDate(iso.slice(0, 10));
 
@@ -31,8 +33,9 @@ function LetterReader({ letter, author, onClose }) {
 
 function LetterWriter({ onClose, onSaved }) {
   const [prompt, setPrompt] = useState(LETTER_PROMPTS[0].prompt);
-  const [custom, setCustom] = useState('');
-  const [content, setContent] = useState('');
+  const [{ custom, content }, setDraft, clearDraft] = useDraft('carta', { custom: '', content: '' });
+  const setCustom = v => setDraft(d => ({ ...d, custom: v }));
+  const setContent = v => setDraft(d => ({ ...d, content: v }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const finalPrompt = prompt === '__outro' ? custom.trim() : prompt;
@@ -43,8 +46,11 @@ function LetterWriter({ onClose, onSaved }) {
     setBusy(true);
     const { error: err } = await supabase.from('letters').insert({ prompt: finalPrompt, content: content.trim() });
     setBusy(false);
-    if (err) setError(err.message);
-    else onSaved();
+    if (err) setError(friendlyError(err));
+    else {
+      clearDraft();
+      onSaved();
+    }
   }
 
   return (
@@ -118,7 +124,7 @@ export default function LettersView({ me, profiles, letters, closedLetters, miss
     if (!window.confirm(`Abrir agora a carta “abra quando ${letter.prompt}”?`)) return;
     const { data, error } = await supabase.rpc('open_letter', { p_id: letter.id });
     if (error) {
-      window.alert(error.message);
+      notifyError(error, 'não deu para abrir a carta 🥺');
       return;
     }
     const opened = Array.isArray(data) ? data[0] : data;
@@ -129,7 +135,7 @@ export default function LettersView({ me, profiles, letters, closedLetters, miss
   async function remove(letter) {
     if (!window.confirm('Rasgar esta carta? 🥺')) return;
     const { error } = await supabase.from('letters').delete().eq('id', letter.id);
-    if (error) window.alert(error.message);
+    if (error) notifyError(error, 'não deu para rasgar a carta');
     else onChanged();
   }
 

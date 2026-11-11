@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { subscribePush, unsubscribePush } from './push';
+import { friendlyError } from './drafts';
 
 // Avisos quando o outro escreve: notificação do sistema (se permitida) + aviso dentro do app.
 const KEY = 'nosso-diario:avisos';
@@ -57,6 +58,14 @@ export function useToasts() {
 export function dismissToast(id) {
   toasts = toasts.filter(t => t.id !== id);
   emit();
+}
+
+/** aviso de erro dentro do app (nunca falhar em silêncio) */
+export function notifyError(error, title = 'não deu para salvar 🥺') {
+  const id = `${Date.now()}-${Math.random()}`;
+  toasts = [...toasts.slice(-2), { id, title, body: friendlyError(error), error: true }];
+  emit();
+  setTimeout(() => dismissToast(id), 9000);
 }
 
 /** mostra o aviso dentro do app e, se a aba não estiver visível, também no sistema */

@@ -5,6 +5,8 @@ import { removePhoto, uploadPhoto } from '../lib/photos';
 import { SectionStrip } from './Gaveta';
 import { MissingSql } from './LettersView';
 import { Photo, PhotoPicker } from './Photo';
+import { friendlyError } from '../lib/drafts';
+import { notifyError } from '../lib/notify';
 
 const dateOf = iso => formatDate(iso.slice(0, 10));
 
@@ -45,12 +47,12 @@ function DoneDialog({ item, userId, onClose, onSaved }) {
       if (file) values.photo_path = await uploadPhoto(file, userId);
     } catch (e) {
       setBusy(false);
-      setError(`não deu para enviar a foto: ${e.message}`);
+      setError(`não deu para enviar a foto: ${friendlyError(e)}`);
       return;
     }
     const { error: err } = await supabase.from('wishlist').update(values).eq('id', item.id);
     setBusy(false);
-    if (err) setError(err.message);
+    if (err) setError(friendlyError(err));
     else onSaved();
   }
 
@@ -89,7 +91,7 @@ function Wishlist({ me, byId, items, onChanged }) {
     e.preventDefault();
     if (!title.trim()) return;
     const { error } = await supabase.from('wishlist').insert({ title: title.trim(), category });
-    if (error) window.alert(error.message);
+    if (error) notifyError(error);
     else {
       setTitle('');
       onChanged();
@@ -98,7 +100,8 @@ function Wishlist({ me, byId, items, onChanged }) {
 
   async function undo(item) {
     const { error } = await supabase.from('wishlist').update({ done_at: null, done_by: null, photo_path: null }).eq('id', item.id);
-    if (!error) {
+    if (error) notifyError(error);
+    else {
       removePhoto(item.photo_path);
       onChanged();
     }
@@ -107,7 +110,8 @@ function Wishlist({ me, byId, items, onChanged }) {
   async function remove(item) {
     if (!window.confirm(`Tirar “${item.title}” da lista?`)) return;
     const { error } = await supabase.from('wishlist').delete().eq('id', item.id);
-    if (!error) {
+    if (error) notifyError(error, 'não deu para tirar da lista');
+    else {
       removePhoto(item.photo_path);
       onChanged();
     }
@@ -202,7 +206,7 @@ function Countdowns({ items, onChanged }) {
     e.preventDefault();
     if (!title.trim() || !date) return;
     const { error } = await supabase.from('countdowns').insert({ title: title.trim(), emoji, target_date: date });
-    if (error) window.alert(error.message);
+    if (error) notifyError(error);
     else {
       setTitle('');
       setDate('');
@@ -213,7 +217,8 @@ function Countdowns({ items, onChanged }) {
   async function remove(c) {
     if (!window.confirm(`Apagar a contagem “${c.title}”?`)) return;
     const { error } = await supabase.from('countdowns').delete().eq('id', c.id);
-    if (!error) onChanged();
+    if (error) notifyError(error, 'não deu para apagar a contagem');
+    else onChanged();
   }
 
   return (

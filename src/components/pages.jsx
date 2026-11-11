@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { MOODS, QUOTES, REACTIONS, daysBetween, formatDate, todayISO } from '../lib/constants';
 import { removePhoto, uploadPhoto } from '../lib/photos';
-import { notificationsSupported, toggleNotifications, useNotificationsEnabled } from '../lib/notify';
+import { notificationsSupported, notifyError, toggleNotifications, useNotificationsEnabled } from '../lib/notify';
+import { friendlyError, useDraft } from '../lib/drafts';
 import { Photo, PhotoPicker } from './Photo';
 import BlurText from './reactbits/BlurText/BlurText';
 import { CornerOrnament, Flourish, KeyCharm, Keyhole } from './DeskProps';
@@ -297,10 +298,18 @@ export function NotesLine({ count, onOpen }) {
 
 /* ---------- formulário (página nova e edição) ---------- */
 export function EntryForm({ initial, userId, onSubmit, onCancel, submitLabel = 'guardar no diário' }) {
-  const [entryDate, setEntryDate] = useState(initial?.entry_date ?? todayISO());
-  const [mood, setMood] = useState(initial?.mood ?? '');
-  const [title, setTitle] = useState(initial?.title ?? '');
-  const [content, setContent] = useState(initial?.content ?? '');
+  // página nova guarda rascunho; editando uma página já salva, não
+  const [draft, setDraft, clearDraft, restored] = useDraft(initial ? null : 'pagina', {
+    entryDate: initial?.entry_date ?? todayISO(),
+    mood: initial?.mood ?? '',
+    title: initial?.title ?? '',
+    content: initial?.content ?? ''
+  });
+  const { entryDate, mood, title, content } = draft;
+  const setEntryDate = v => setDraft(d => ({ ...d, entryDate: v }));
+  const setMood = v => setDraft(d => ({ ...d, mood: v }));
+  const setTitle = v => setDraft(d => ({ ...d, title: v }));
+  const setContent = v => setDraft(d => ({ ...d, content: v }));
   const [photoFile, setPhotoFile] = useState(null);
   const [photoRemoved, setPhotoRemoved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -323,23 +332,20 @@ export function EntryForm({ initial, userId, onSubmit, onCancel, submitLabel = '
       else if (photoRemoved) values.photo_path = null;
     } catch (uploadError) {
       setBusy(false);
-      setError(`não deu para enviar a foto: ${uploadError.message}`);
+      setError(`não deu para enviar a foto: ${friendlyError(uploadError)}`);
       return;
     }
     const err = await onSubmit(values);
     setBusy(false);
     if (err) {
-      setError(err);
+      setError(friendlyError(err));
       return;
     }
+    clearDraft();
     if ((photoFile || photoRemoved) && initial?.photo_path) removePhoto(initial.photo_path);
     setPhotoFile(null);
     setPhotoRemoved(false);
-    if (!initial) {
-      setTitle('');
-      setContent('');
-      setMood('');
-    }
+    if (!initial) setDraft({ entryDate: todayISO(), mood: '', title: '', content: '' });
   }
 
   return (
@@ -396,6 +402,7 @@ export function EntryForm({ initial, userId, onSubmit, onCancel, submitLabel = '
           setPhotoRemoved(true);
         }}
       />
+      {restored && !error && content && <p className="draft-hint">✎ rascunho recuperado — continue de onde parou</p>}
       {error && <p className="error">{error}</p>}
       <div className="form-actions">
         {onCancel && (
@@ -463,7 +470,8 @@ export function EntryPage({ entry, author, me, onChanged, pageNumber }) {
       ? supabase.from('reactions').delete().match({ entry_id: entry.id, user_id: me.id, emoji })
       : supabase.from('reactions').insert({ entry_id: entry.id, user_id: me.id, emoji });
     const { error } = await query;
-    if (!error) onChanged();
+    if (error) notifyError(error, 'não deu para reagir 🥺');
+    else onChanged();
   }
 
   if (editing) {

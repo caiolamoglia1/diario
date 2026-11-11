@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabase';
 import { formatDate, questionFor, shiftDate, todayISO } from '../lib/constants';
 import { SectionStrip } from './Gaveta';
 import { MissingSql } from './LettersView';
+import { friendlyError, useDraft } from '../lib/drafts';
 
 function AnswerForm({ date, userId, initial, onSaved, onCancel }) {
-  const [text, setText] = useState(initial ?? '');
+  const [{ text }, setDraft, clearDraft] = useDraft(initial ? null : `resposta:${date}`, { text: initial ?? '' });
+  const setText = v => setDraft({ text: v });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -15,8 +17,11 @@ function AnswerForm({ date, userId, initial, onSaved, onCancel }) {
     setBusy(true);
     const { error: err } = await supabase.from('answers').upsert({ question_date: date, user_id: userId, answer: text.trim() });
     setBusy(false);
-    if (err) setError(err.message);
-    else onSaved();
+    if (err) setError(friendlyError(err));
+    else {
+      clearDraft();
+      onSaved();
+    }
   }
 
   return (

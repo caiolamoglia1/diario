@@ -4383,3 +4383,52 @@ input::placeholder {
     animation: none;
   }
 }
+
+
+/* =========================================================
+   Salvar sem perder nada: rascunho, erros, resgate
+   ========================================================= */
+.draft-hint {
+  margin: 0;
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.toast.error {
+  border-left-color: #c0392b;
+}
+
+.toast.error strong {
+  color: #a8304a;
+}
+
+.rescue-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 16px;
+  max-width: min(760px, 100%);
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: linear-gradient(170deg, #fffaf0, #f3e6cf);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  box-shadow: 0 8px 20px rgba(40, 15, 0, 0.4);
+  border-left: 4px solid var(--rose);
+  margin-bottom: -16px;
+  position: relative;
+  z-index: 5;
+}
+
+.rescue-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+[data-theme='moor'] .rescue-banner {
+  background: linear-gradient(170deg, #efe4cb, #d8c9a8);
+}

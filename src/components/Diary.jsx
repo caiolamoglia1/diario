@@ -6,7 +6,9 @@ import { BackCover, CoverArt, EndNote, EntryPage, InsideCover, ThemePage, WriteP
 import { setTheme, useTheme } from '../lib/theme';
 import { setCover } from '../lib/cover';
 import { specialDay, todayISO } from '../lib/constants';
-import { dismissToast, useToasts } from '../lib/notify';
+import { dismissToast, notifyError, useToasts } from '../lib/notify';
+import { usingSupabase } from '../lib/supabase';
+import { dismissLocalData, findLocalData, importLocalData } from '../lib/rescueLocal';
 import useDiaryData from '../lib/useDiaryData';
 import Calendar from './Calendar';
 import ProfileSetup from './ProfileSetup';
@@ -48,8 +50,24 @@ export default function Diary({ me, onProfileChange }) {
   const pickCover = useCallback(async id => {
     setCover(id);
     // guarda para os dois (se o 006 ainda não foi rodado, fica só neste aparelho)
-    await supabase.from('diary_settings').upsert({ id: 1, cover: id, updated_at: new Date().toISOString() });
+    const { error } = await supabase.from('diary_settings').upsert({ id: 1, cover: id, updated_at: new Date().toISOString() });
+    if (error) notifyError(error, 'a capa mudou só neste aparelho');
   }, []);
+
+  // páginas escritas neste aparelho antes do diário estar ligado ao banco
+  const [rescue, setRescue] = useState(() => (usingSupabase ? findLocalData() : null));
+  const [rescuing, setRescuing] = useState(false);
+  async function sendRescue() {
+    setRescuing(true);
+    const { sent, errors } = await importLocalData(rescue, me.id);
+    setRescuing(false);
+    await load();
+    if (errors.length) {
+      notifyError(errors[0], `enviei ${sent}, mas ${errors.length} não foram`);
+    } else {
+      setRescue(null);
+    }
+  }
 
   // atalho: "/" ou Ctrl+K abre a busca
   useEffect(() => {
@@ -167,6 +185,31 @@ export default function Diary({ me, onProfileChange }) {
 
   return (
     <>
+      {rescue && (
+        <div className="rescue-banner" role="status">
+          <span>
+            💾 Encontramos neste aparelho {describeRescue(rescue)} escritos antes do diário ficar online. Eles ainda não estão no
+            diário de vocês.
+          </span>
+          <span className="rescue-actions">
+            <button className="wax-btn small" onClick={sendRescue} disabled={rescuing}>
+              {rescuing ? 'enviando…' : 'enviar para o diário'}
+            </button>
+            <button
+              className="link-btn"
+              disabled={rescuing}
+              onClick={() => {
+                if (!window.confirm('Descartar o que foi escrito neste aparelho no modo local? (fica uma cópia guardada no navegador)')) return;
+                dismissLocalData();
+                setRescue(null);
+              }}
+            >
+              descartar
+            </button>
+          </span>
+        </div>
+      )}
+
       {view === 'diario' && (special || data.countdowns.length > 0) && (
         <div className="desk-top-row">
           {special && (
@@ -302,13 +345,27 @@ export default function Diary({ me, onProfileChange }) {
   );
 }
 
+function describeRescue(r) {
+  const parts = [
+    [r.entries.length, 'página', 'páginas'],
+    [r.notes.length, 'bilhete', 'bilhetes'],
+    [r.letters.length, 'carta', 'cartas'],
+    [r.wishlist.length, 'item da lista', 'itens da lista'],
+    [r.countdowns.length, 'contagem', 'contagens'],
+    [r.answers.length, 'resposta', 'respostas']
+  ]
+    .filter(([n]) => n > 0)
+    .map(([n, one, many]) => `${n} ${n === 1 ? one : many}`);
+  return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} e ${parts.at(-1)}` : parts[0];
+}
+
 function Toasts() {
   const toasts = useToasts();
   if (toasts.length === 0) return null;
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map(t => (
-        <button key={t.id} className="toast" onClick={() => dismissToast(t.id)}>
+        <button key={t.id} className={`toast${t.error ? ' error' : ''}`} onClick={() => dismissToast(t.id)}>
           <strong>{t.title}</strong>
           {t.body && <span>{t.body}</span>}
         </button>

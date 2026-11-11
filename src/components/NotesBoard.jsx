@@ -4,6 +4,7 @@ import { NOTE_STYLES, QUOTES, formatDate, seeded, shiftDate, todayISO } from '..
 import { useTheme } from '../lib/theme';
 import { removePhoto, uploadAudio, uploadPhoto } from '../lib/photos';
 import { AudioPlayer, AudioRecorder } from './Audio';
+import { friendlyError, useDraft } from '../lib/drafts';
 import { Photo, PhotoPicker } from './Photo';
 
 /** espalha as cartinhas numa grade com folga + desvio aleatório (estável por bilhete) */
@@ -107,7 +108,8 @@ function NoteViewer({ note, author, me, onClose, onDeleted }) {
 }
 
 function NoteComposer({ date, userId, onClose, onSaved }) {
-  const [content, setContent] = useState('');
+  const [{ content }, setDraft, clearDraft] = useDraft('bilhete', { content: '' });
+  const setContent = v => setDraft({ content: v });
   const [style, setStyle] = useState('envelope');
   const [noteDate, setNoteDate] = useState(date);
   const [photoFile, setPhotoFile] = useState(null);
@@ -125,13 +127,16 @@ function NoteComposer({ date, userId, onClose, onSaved }) {
       if (audio) values.audio_path = await uploadAudio(audio, userId);
     } catch (uploadError) {
       setBusy(false);
-      setError(`não deu para enviar: ${uploadError.message}`);
+      setError(`não deu para enviar: ${friendlyError(uploadError)}`);
       return;
     }
     const { error: err } = await supabase.from('notes').insert(values);
     setBusy(false);
-    if (err) setError(err.message);
-    else onSaved(noteDate);
+    if (err) setError(friendlyError(err));
+    else {
+      clearDraft();
+      onSaved(noteDate);
+    }
   }
 
   return (

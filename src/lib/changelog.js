@@ -1,6 +1,16 @@
 // Aba "atualizações": o que foi chegando no diário. A primeira é a mais nova.
 export const CHANGELOG = [
   {
+    version: '1.6',
+    date: '2026-11-10',
+    title: 'nada se perde',
+    items: [
+      '💾 resgate do que foi escrito antes do diário ficar online: aparece um aviso para enviar ao diário',
+      '✎ rascunho automático nas páginas, bilhetes, cartas e respostas',
+      '🥺 quando algo não salva, aparece o motivo (sem internet, sessão expirada…) em vez de falhar em silêncio'
+    ]
+  },
+  {
     version: '1.5',
     date: '2026-11-10',
     title: 'capas',
